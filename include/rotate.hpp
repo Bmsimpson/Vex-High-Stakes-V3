@@ -26,9 +26,9 @@ public:
 class GyroRotateController { // class to hande gyro rotate PID controller
 private:
   // PID constants for gyro rotate
- double kP = 0.0082;     // 0.01567;   // increase p until overshoots and then just undershoots (power)   0.015
- double kI = 0.01/1000; //0.012/1000;      // increase i until under a degree off either way
- double kD = 0.0023/100; //0.0568/100;       // increase d until only undershoots (dampening) too high of d = overshoots (sine curve) 0.05/100
+ double kP = 0.0088;     // 0.0088;   // increase p until overshoots and then just undershoots (power)   0.015
+ double kI = 0.01/1000; //0.01/1000;      // increase i until under a degree off either way
+ double kD = 0.0023/100; //0.0023/100;       // increase d until only undershoots (dampening) too high of d = overshoots (sine curve) 0.05/100
 
   double zeroPosition = 0; // offset from zero
 

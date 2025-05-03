@@ -17,19 +17,42 @@ int autoType = 0;
 bool isLeft = false;
 bool selected = false;
 bool driverSkillsMode = false;
-const char* redTitles[] = {"Left Safe AWP", "Right Safe AWP", "Red 6 Ring", "elims"};
-const char* blueTitles[] = {"Left Safe AWP", "Right Safe AWP", "Blue 6 Ring", "right_blue_3_ring"};
-const char* skillsTitles[] = {"None", "None", "None", "None"};
 
-void (*redScripts[])() = {left_safe_awp, right_safe_awp, red_6_ring, right_elims}; //red
-void (*blueScripts[])() = {left_safe_awp, right_safe_awp, blue_6_ring, red_3_ring};		//blue
-void (*skillsScripts[])() = {placeHolder, placeHolder, placeHolder, placeHolder};	//skills
+int page = 1;
+int numOfPages = 2;
+
+const char* redTitles[] = {
+	"Red 6 AWP", "Red Sig AWP", "red6baker", "red6BakerBar",
+	"Red 5 Baker", "Red 7 Ring", "redPosAWP", "Red Mogo Rush"
+	// "Red Ring Rush", "red_3_ring", "None", "None"
+};
+const char* blueTitles[] = {
+	"Blue 6 AWP", "Blue Sig AWP", "blue6Baker", "blue6BakerBar",
+	"Blue 5 Baker", "Blue 7 Ring", "bluePosAWP", "Blue Mogo Rush"
+	// "Blue Ring Rush", "blue_3_ring", "None", "None"
+};
+const char* skillsTitles[] = {
+	"skillsAuto", "None", "None", "None"
+};
+
+void (*redScripts[])() = {
+	red6AWP, redSig, red6Baker, red6BakerBar,
+	red5Baker, red7, redPosAWP, redMogoRush
+	// redRingRush, red_3_ring, placeHolder, placeHolder
+}; // red
+void (*blueScripts[])() = {
+	blue6AWP, blueSig, blue6Baker, blue6BakerBar,
+	blue5Baker, blue7, bluePosAWP, blueMogoRush
+	// blueRingRush, blue_3_ring, placeHolder, placeHolder
+}; // blue
+void (*skillsScripts[])() = {
+	skillsAuto, placeHolder, placeHolder, placeHolder
+}; // skills
 
 lv_obj_t* selectAutoScreen = lv_obj_create(NULL, NULL);
 lv_obj_t* mainMenuScreen = lv_obj_create(NULL, NULL);
 lv_obj_t* visionMenu = lv_obj_create(NULL, NULL);
 lv_obj_t* loadScreen = lv_obj_create(NULL, NULL);
-
 
 lv_obj_t* redOption1;
 lv_obj_t* redOption2;
@@ -227,6 +250,9 @@ lv_action_t setSkills(lv_obj_t* checkBox) {
 	return (lv_action_t)LV_RES_OK;
 }
 
+
+lv_obj_t* tabview;
+
 static lv_res_t goToAutoSelect(lv_obj_t* btn) {
 	lv_scr_load(selectAutoScreen);
 	return LV_RES_OK; /*Return OK if the button is not deleted*/
@@ -242,13 +268,27 @@ static lv_res_t goToMainMenu(lv_obj_t* btn) {
 	return LV_RES_OK; /*Return OK if the button is not deleted*/
 }
 
+lv_action_t nextPage() {
+	if (page < numOfPages) {
+		page += 1;
+	} else {
+		page = 1;
+	}
+	if (lv_tabview_get_tab_act(tabview) == 1) {
+		displayInit();
+		lv_tabview_set_tab_act(tabview, 1, false);
+	} else {
+		displayInit();
+	}
+	return (lv_action_t)LV_RES_OK;
+}
+
 void displayInit(void) {
 	selectAutoScreen = lv_scr_act();
+	tabview = lv_tabview_create(selectAutoScreen, NULL);
 	//lv_scr_load(selectAutoScreen);
 	lv_theme_t* th = lv_theme_alien_init(210, &lv_font_dejavu_20);  // Set a HUE value and a Font for the Night Theme
 	lv_theme_set_current(th);
-	lv_obj_t* tabview;
-	tabview = lv_tabview_create(selectAutoScreen, NULL);
 
 	// Add 3 tabs (the tabs are page (lv_page) and can be scrolled
 	lv_obj_t* redTab = lv_tabview_add_tab(tabview, "Red");
@@ -275,6 +315,8 @@ void displayInit(void) {
 	lv_obj_t* skillsSideContent;
 	lv_obj_t* redSelectButtonContent;
 	lv_obj_t* blueSelectButtonContent;
+	lv_obj_t* redPageButtonContent;
+	lv_obj_t* bluePageButtonContent;
 	lv_obj_t* skillsSelectButtonContent;
 	lv_obj_t* redCancelButtonContent;
 	lv_obj_t* blueCancelButtonContent;
@@ -289,6 +331,9 @@ void displayInit(void) {
 	redSelectButtonContent = lv_cont_create(redTab, NULL);
 	blueSelectButtonContent = lv_cont_create(blueTab, NULL);
 	skillsSelectButtonContent = lv_cont_create(skillsTab, NULL);
+
+	redPageButtonContent = lv_cont_create(redTab, NULL);
+	bluePageButtonContent = lv_cont_create(blueTab, NULL);
 
 	redCancelButtonContent = lv_cont_create(redTab, NULL);
 	blueCancelButtonContent = lv_cont_create(blueTab, NULL);
@@ -318,6 +363,10 @@ void displayInit(void) {
 	lv_cont_set_fit(redSelectButtonContent, false, false);
 	lv_obj_set_style(redSelectButtonContent, &no_border);
 
+	lv_cont_set_layout(redPageButtonContent, LV_LAYOUT_COL_L);
+	lv_cont_set_fit(redPageButtonContent, false, false);
+	lv_obj_set_style(redPageButtonContent, &no_border);
+
 	lv_cont_set_layout(redCancelButtonContent, LV_LAYOUT_COL_L);
 	lv_cont_set_fit(redCancelButtonContent, true, true);
 	lv_obj_set_style(redCancelButtonContent, &no_border);
@@ -325,6 +374,10 @@ void displayInit(void) {
 	lv_cont_set_layout(blueSelectButtonContent, LV_LAYOUT_COL_L);
 	lv_cont_set_fit(blueSelectButtonContent, false, false);
 	lv_obj_set_style(blueSelectButtonContent, &no_border);
+
+	lv_cont_set_layout(bluePageButtonContent, LV_LAYOUT_COL_L);
+	lv_cont_set_fit(bluePageButtonContent, false, false);
+	lv_obj_set_style(bluePageButtonContent, &no_border);
 
 	lv_cont_set_layout(blueCancelButtonContent, LV_LAYOUT_COL_L);
 	lv_cont_set_fit(blueCancelButtonContent, true, true);
@@ -366,49 +419,49 @@ void displayInit(void) {
 
 	if (sizeof(redTitles) / sizeof(redTitles[0]) > 0) {
 		redOption1 = lv_cb_create(redContent, NULL);
-		lv_cb_set_text(redOption1, redTitles[0]);
+		lv_cb_set_text(redOption1, redTitles[(page - 1) * 4]);
 		lv_cb_set_action(redOption1, (lv_action_t)setRed);
 	}
 
 	if (sizeof(redTitles) / sizeof(redTitles[0]) > 1) {
 		redOption2 = lv_cb_create(redContent, NULL);
-		lv_cb_set_text(redOption2, redTitles[1]);
+		lv_cb_set_text(redOption2, redTitles[(page - 1) * 4 + 1]);
 		lv_cb_set_action(redOption2, (lv_action_t)setRed);
 	}
 
 	if (sizeof(redTitles) / sizeof(redTitles[0]) > 2) {
 		redOption3 = lv_cb_create(redContent, NULL);
-		lv_cb_set_text(redOption3, redTitles[2]);
+		lv_cb_set_text(redOption3, redTitles[(page - 1) * 4 + 2]);
 		lv_cb_set_action(redOption3, (lv_action_t)setRed);
 	}
 
 	if (sizeof(redTitles) / sizeof(redTitles[0]) > 3) {
 		redOption4 = lv_cb_create(redContent, NULL);
-		lv_cb_set_text(redOption4, redTitles[3]);
+		lv_cb_set_text(redOption4, redTitles[(page - 1) * 4 + 3]);
 		lv_cb_set_action(redOption4, (lv_action_t)setRed);
 	}
 
 	if (sizeof(blueTitles) / sizeof(blueTitles[0]) > 0) {
 		blueOption1 = lv_cb_create(blueContent, NULL);
-		lv_cb_set_text(blueOption1, blueTitles[0]);
+		lv_cb_set_text(blueOption1, blueTitles[(page - 1) * 4]);
 		lv_cb_set_action(blueOption1, (lv_action_t)setBlue);
 	}
 
 	if (sizeof(blueTitles) / sizeof(blueTitles[0]) > 1) {
 		blueOption2 = lv_cb_create(blueContent, NULL);
-		lv_cb_set_text(blueOption2, blueTitles[1]);
+		lv_cb_set_text(blueOption2, blueTitles[(page - 1) * 4 + 1]);
 		lv_cb_set_action(blueOption2, (lv_action_t)setBlue);
 	}
 
 	if (sizeof(blueTitles) / sizeof(blueTitles[0]) > 2) {
 		blueOption3 = lv_cb_create(blueContent, NULL);
-		lv_cb_set_text(blueOption3, blueTitles[2]);
+		lv_cb_set_text(blueOption3, blueTitles[(page - 1) * 4 + 2]);
 		lv_cb_set_action(blueOption3, (lv_action_t)setBlue);
 	}
 
 	if (sizeof(blueTitles) / sizeof(blueTitles[0]) > 3) {
 		blueOption4 = lv_cb_create(blueContent, NULL);
-		lv_cb_set_text(blueOption4, blueTitles[3]);
+		lv_cb_set_text(blueOption4, blueTitles[(page - 1) * 4 + 3]);
 		lv_cb_set_action(blueOption4, (lv_action_t)setBlue);
 	}
 
@@ -454,6 +507,8 @@ void displayInit(void) {
 	lv_obj_set_free_num(skillsSelectBtn, 1); /*Set a unique number for the button*/
 	lv_btn_set_action(skillsSelectBtn, LV_BTN_ACTION_CLICK, (lv_action_t)selectAuto);
 
+	
+
 	// Add a label to the button
 	label = lv_label_create(selectBtn, NULL);
 	lv_label_set_text(label, "Select");
@@ -462,6 +517,25 @@ void displayInit(void) {
 	label = lv_label_create(skillsSelectBtn, NULL);
 	lv_label_set_text(label, "Select");
 
+	// next page button
+	lv_obj_t* redPageBtn = lv_btn_create(redPageButtonContent, NULL);
+	lv_obj_align(redPageBtn, label, LV_ALIGN_IN_BOTTOM_LEFT, 0, 0);
+	lv_obj_set_free_num(redPageBtn, 1); /*Set a unique number for the button*/
+	lv_btn_set_action(redPageBtn, LV_BTN_ACTION_CLICK, (lv_action_t)nextPage);
+
+	lv_obj_t* bluePageBtn = lv_btn_create(bluePageButtonContent, NULL);
+	lv_obj_align(bluePageBtn, label, LV_ALIGN_IN_BOTTOM_LEFT, 0, 0);
+	lv_obj_set_free_num(bluePageBtn, 1); /*Set a unique number for the button*/
+	lv_btn_set_action(bluePageBtn, LV_BTN_ACTION_CLICK, (lv_action_t)nextPage);
+
+	// add labels
+	label = lv_label_create(redPageBtn, NULL);
+	lv_label_set_text(label, "Next Page");
+	label = lv_label_create(bluePageBtn, NULL);
+	lv_label_set_text(label, "Next Page");
+	
+
+	// cancel button
 	lv_obj_t* cancelBtn = lv_btn_create(redCancelButtonContent, NULL);
 	lv_obj_align(cancelBtn, label, LV_ALIGN_IN_BOTTOM_LEFT, 0, 0);
 	lv_obj_set_free_num(cancelBtn, 1); /*Set a unique number for the button*/
@@ -494,6 +568,10 @@ void displayInit(void) {
 	lv_obj_set_size(blueCancelBtn, 100, 50);
 	lv_obj_set_size(skillsCancelBtn, 100, 50);
 
+	// next page button size
+	lv_obj_set_size(redPageBtn, 100, 30);
+	lv_obj_set_size(bluePageBtn, 100, 30);
+
 	lv_obj_align(redContent, NULL, LV_ALIGN_IN_LEFT_MID, 0, -50);
 	lv_obj_align(blueContent, NULL, LV_ALIGN_IN_LEFT_MID, 0, -50);
 	lv_obj_align(skillsContent, NULL, LV_ALIGN_IN_LEFT_MID, 0, -50);
@@ -502,10 +580,11 @@ void displayInit(void) {
 	lv_obj_align(redSelectButtonContent, NULL, LV_ALIGN_IN_BOTTOM_RIGHT, 0, 30);
 	lv_obj_align(blueSelectButtonContent, NULL, LV_ALIGN_IN_BOTTOM_RIGHT, 0, 30);
 	lv_obj_align(skillsSelectButtonContent, NULL, LV_ALIGN_IN_BOTTOM_RIGHT, 0, 30);
-
 	lv_obj_align(redCancelButtonContent, NULL, LV_ALIGN_IN_BOTTOM_RIGHT, -125, -25);
 	lv_obj_align(blueCancelButtonContent, NULL, LV_ALIGN_IN_BOTTOM_RIGHT, -125, -25);
 	lv_obj_align(skillsCancelButtonContent, NULL, LV_ALIGN_IN_BOTTOM_RIGHT, -125, -25);
+	lv_obj_align(redPageButtonContent, NULL, LV_ALIGN_IN_BOTTOM_RIGHT, -340, 0);
+	lv_obj_align(bluePageButtonContent, NULL, LV_ALIGN_IN_BOTTOM_RIGHT, -340, 0);
 
 	// MAIN MENU BEGIN
 	mainMenuScreen = lv_obj_create(NULL, NULL);
@@ -638,7 +717,7 @@ style_indic.body.padding.ver = 3;
 lv_style_copy(&style_knob, &lv_style_pretty);
 style_knob.body.radius = LV_RADIUS_CIRCLE;
 style_knob.body.opa = LV_OPA_70;
-style_knob.body.padding.ver = 10 ;
+style_knob.body.padding.ver = 10;
 }
 
 void setCatTemp(int temp) {
@@ -682,17 +761,27 @@ void runSelectedAuto(void) {
 	if (selectedProgram == DO_NOT_RUN) {
 		return;
 	}
+
+	switch (lv_tabview_get_tab_act(tabview)) {
+		case 0:
+			teamColor = "red";
+			break;
+		case 1:
+			teamColor = "blue";
+			break;
+		case 2:
+			teamColor = "red";
+			break;
+	}
 	
 	switch (autoType) {
 		case AUTONOMOUS_RED:
 			printf("NEAR\n");
-			teamColor = "red";
-			redScripts[selectedProgram]();
+			redScripts[selectedProgram + (4 * (page - 1))]();
 			break;
 		case AUTONOMOUS_BLUE:
 			printf("FAR\n");
-			teamColor = "blue";
-			blueScripts[selectedProgram]();
+			blueScripts[selectedProgram + (4 * (page - 1))]();
 			break;
 		case AUTONOMOUS_SKILLS:
 			printf("SKILLS\n");

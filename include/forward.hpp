@@ -54,6 +54,8 @@ class ForwardController { // class to hande gyro Forward PID controller
       double headingKd
     );
     double getPosition(void);
-    void setTarget(double target, int heading, int timeOut);
+    double getHeading();
+    void setTarget(double target, int heading, double maxSpeed, int timeOut);
+    void setCurveTarget(double targetDistance, int targetHeading, double maxSpeed, int timeOut);
 };
 

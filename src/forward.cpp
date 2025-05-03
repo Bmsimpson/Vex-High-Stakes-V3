@@ -40,13 +40,14 @@
         headingController(okapi::IterativeControllerFactory::posPID(headingKp, headingKi, headingKd)),
         forwardSettledUtility(okapi::TimeUtilFactory::createDefault().getTimer(), 2, 3, 200_ms),
         headingSettledUtility(okapi::TimeUtilFactory::createDefault().getTimer(), 2, 3, 200_ms) {}
-
 // get the average encoder value from left and right side
 double ForwardController::getPosition(void) {
     return (chassisModel->getSensorVals()[0] + chassisModel->getSensorVals()[1]) / 2;
 }
 
-void ForwardController::setTarget(double target, int heading, int timeOut) {
+double ForwardController::getHeading() { return imu->get_rotation(); }
+
+void ForwardController::setTarget(double target, int heading, double maxSpeed, int timeOut) {
   chassisModel->resetSensors();
   forwardController.setTarget(target); // set the target to Forward to
   headingController.setTarget(heading);
@@ -57,7 +58,7 @@ void ForwardController::setTarget(double target, int heading, int timeOut) {
   while (true) {                          // loop infinitely
     double chassisPosition = getPosition();
     // controllerOutput->controllerSet(forwardController.step(chassisPosition)); // set output to the value
-    chassisModel->driveVectorVoltage(forwardController.step(chassisPosition), headingController.step(imu->get_rotation()));
+    chassisModel->driveVectorVoltage(std::clamp(forwardController.step(chassisPosition), -maxSpeed, maxSpeed), headingController.step(imu->get_rotation()));
     maxPosition = std::max(chassisPosition, maxPosition);                                                       // calculated by the PID controller
     //forwardController.setIntegratorReset(true); // reset the integral value when target is passed
 
@@ -68,6 +69,46 @@ void ForwardController::setTarget(double target, int heading, int timeOut) {
     pros::lcd::print(3, "Target: %1.0f\n", target);                            // print target value to LCD
     pros::lcd::print(4, "Error: %1.2f \n", abs(chassisPosition - target));
     pros::lcd::print(5, "Max Position: %1.2f \n", maxPosition); // print error value to LCD
+    pros::lcd::print(6, "Heading: %1.2f\n", imu->get_rotation());
+    printf("Yaw: %1.2f degrees Power: %1.2f\n", chassisPosition, forwardController.step(chassisPosition));
+
+    if (
+        (forwardSettledUtility.isSettled(forwardController.getError()) &&
+        headingSettledUtility.isSettled(headingController.getError())) ||
+        pros::millis() >= startTime + timeOut) { // if the controller is settled
+      // printf("Settled\n");
+      // controllerOutput->controllerSet(0); // set controller output to zero
+      chassisModel->driveVectorVoltage(0, 0);
+      break;                              // break out of loop
+    }
+
+    pros::delay(20); // delay 20 milliseconds to not overload cpu
+    }
+ }
+
+void ForwardController::setCurveTarget(double targetDistance, int targetHeading, double maxSpeed, int timeOut) {
+  chassisModel->resetSensors();
+  forwardController.setTarget(targetDistance); // set the target to Forward
+
+  forwardSettledUtility.reset();           // reset the settled utility
+  long startTime = pros::millis();
+  double maxPosition = getPosition();
+  while (true) {                          // loop infinitely
+    double chassisPosition = getPosition();
+    // controllerOutput->controllerSet(forwardController.step(chassisPosition)); // set output to the value
+    chassisModel->driveVectorVoltage(std::clamp(forwardController.step(chassisPosition), -maxSpeed, maxSpeed), headingController.step(imu->get_rotation()));
+    maxPosition = std::max(chassisPosition, maxPosition);                                                       // calculated by the PID controller
+    //forwardController.setIntegratorReset(true); // reset the integral value when target is passed
+    headingController.setTarget((chassisPosition / targetDistance) * (targetHeading + 1.05));
+
+    // temporary debugging
+    pros::lcd::set_text(0, "Curve Debugging");
+    pros::lcd::print(1, "Position %1.2f \n", chassisPosition);                     // print yaw value to LCD
+    pros::lcd::print(2, "Target: %1.0f\tError: %1.2f\n", targetDistance, abs(chassisPosition - targetDistance));                            // print target value to LCD
+    pros::lcd::print(3, "Max Position: %1.2f \n", maxPosition); // print error value to LCD
+    pros::lcd::print(4, "Yaw: %1.2f degrees\n", getHeading());                     // print yaw value to LCD
+    pros::lcd::print(5, "Yaw Target: %1.0f\n", targetHeading);                            // print target value to LCD
+    pros::lcd::print(6, "Yaw Error: %1.2f degrees\n", abs(getHeading() - targetHeading)); // print error value to LCD
     printf("Yaw: %1.2f degrees Power: %1.2f\n", chassisPosition, forwardController.step(chassisPosition));
 
     if (
